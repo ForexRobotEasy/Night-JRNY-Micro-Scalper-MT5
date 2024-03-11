@@ -1,0 +1,95 @@
+
+//+------------------------------------------------------------------+
+//|                                        Night JRNY Micro Scalper MT5|
+//|                                       Developer's site: forexroboteasy.com|
+//|                                       Developed by: Forex Robot Easy Team|
+//+------------------------------------------------------------------+
+
+// Define input parameters
+input double lotSize = 0.01; // Lot size for each trade
+input int stopLoss = 20; // Stop loss in pips
+input int takeProfit = 30; // Take profit in pips
+input int maxSpread = 5; // Maximum allowed spread in pips
+input double riskPercentage = 1.0; // Risk percentage for each trade
+
+// Define variables
+double accountBalance;
+double riskAmount;
+
+// Initialize the expert advisor
+void OnInit()
+{
+    // Get the account balance
+    accountBalance = AccountInfoDouble(ACCOUNT_BALANCE);
+
+    // Calculate the risk amount based on account balance and risk percentage
+    riskAmount = accountBalance * riskPercentage / 100;
+}
+
+// Start trading
+void OnTick()
+{
+    // Check if market is open during night session
+    if (IsNightSession())
+    {
+        // Calculate the lot size based on risk amount
+        double calculatedLotSize = CalculateLotSize();
+
+        // Calculate stop loss and take profit levels
+        double calculatedStopLoss = NormalizeDouble(SymbolInfoDouble(Symbol(), SYMBOL_DIGITS) * stopLoss, SymbolInfoInteger(Symbol(), SYMBOL_DIGITS));
+        double calculatedTakeProfit = NormalizeDouble(SymbolInfoDouble(Symbol(), SYMBOL_DIGITS) * takeProfit, SymbolInfoInteger(Symbol(), SYMBOL_DIGITS));
+
+        // Check if the spread is within the allowed range
+        if (SymbolInfoInteger(Symbol(), SYMBOL_SPREAD) <= maxSpread)
+        {
+            // Check for market trend
+            if (IsMarketTrending())
+            {
+                // Enter short position
+                if (OrderSend(Symbol(), OP_SELL, calculatedLotSize, Bid, 0, calculatedStopLoss, calculatedTakeProfit, 'Night JRNY Micro Scalper MT5', 0, 0, Red))
+                {
+                    Print('Short position opened successfully');
+                }
+                else
+                {
+                    Print('Failed to open short position: ', GetLastError());
+                }
+            }
+        }
+    }
+}
+
+// Check if it is night session
+bool IsNightSession()
+{
+    int hour = TimeHour(TimeCurrent());
+    return (hour >= 22 || hour <= 4);
+}
+
+// Check if market is trending
+bool IsMarketTrending()
+{
+    // Your trend analysis algorithm goes here
+
+    // Return true if market is trending, false otherwise
+    return false;
+}
+
+// Calculate the lot size based on risk amount
+double CalculateLotSize()
+{
+    // Calculate the maximum lot size based on risk amount
+    double maxLotSize = riskAmount / stopLoss;
+
+    // Check if calculated lot size is greater than input lot size
+    if (maxLotSize > lotSize)
+    {
+        return lotSize;
+    }
+    else
+    {
+        return maxLotSize;
+    }
+}
+
+//+------------------------------------------------------------------+
